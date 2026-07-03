@@ -19,7 +19,12 @@ class SessionData:
     has_image: bool = False
     height: int | None = None
     weight: int | None = None
+    body_type: str | None = None
+    confidence: float | None = None
+    recommended_size: str | None = None
+    recommendations: list[str] = field(default_factory=list)
     preferences: dict[str, Any] = field(default_factory=dict)
+    last_interaction: str | None = None
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
@@ -47,6 +52,7 @@ class SessionStore:
         has_image: bool,
         height: int | None = None,
         weight: int | None = None,
+        analysis: dict[str, Any] | None = None,
     ) -> SessionData:
         with self._lock:
             session = self._sessions.setdefault(
@@ -63,6 +69,19 @@ class SessionStore:
             if weight is not None:
                 session.weight = weight
 
+            if analysis:
+                session.body_type = analysis.get("body_type", session.body_type)
+                session.confidence = analysis.get("confidence", session.confidence)
+                session.recommended_size = analysis.get(
+                    "recommended_size",
+                    session.recommended_size,
+                )
+                session.recommendations = analysis.get(
+                    "recommendations",
+                    session.recommendations,
+                )
+
+            session.last_interaction = "image_analysis"
             session.updated_at = datetime.now(UTC)
             return session
 
@@ -77,6 +96,17 @@ class SessionStore:
                 SessionData(session_id=session_id),
             )
             session.preferences.update(preferences)
+            session.last_interaction = "chat"
+            session.updated_at = datetime.now(UTC)
+            return session
+
+    def touch_interaction(self, session_id: str, interaction: str) -> SessionData:
+        with self._lock:
+            session = self._sessions.setdefault(
+                session_id,
+                SessionData(session_id=session_id),
+            )
+            session.last_interaction = interaction
             session.updated_at = datetime.now(UTC)
             return session
 
