@@ -31,9 +31,9 @@ export function StyleProfile({
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-900/50 to-purple-900/20 border-l border-purple-500/20">
       {/* Header Section */}
-      <div className="px-8 py-6 border-b border-purple-500/20">
+      <div className="px-8 py-6 border-b border-blue-500/20">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -53,7 +53,7 @@ export function StyleProfile({
         >
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold">
                 1
               </div>
               <h3 className="text-sm font-semibold text-white tracking-wide">
@@ -64,7 +64,7 @@ export function StyleProfile({
             {/* Upload Area */}
             <div
               onClick={onImageClick}
-              className="group relative border-2 border-dashed border-purple-500/60 rounded-xl p-12 py-20 text-center cursor-pointer transition-all hover:border-purple-400 hover:bg-purple-500/5"
+              className="group relative border-2 border-dashed border-blue-500/60 rounded-xl p-12 py-20 text-center cursor-pointer transition-all hover:border-blue-400 hover:bg-blue-500/5"
             >
               {preview ? (
                 <motion.div
@@ -85,7 +85,7 @@ export function StyleProfile({
                 <>
                   <div className="text-3xl mb-3">📸</div>
                   <p className="text-sm font-semibold text-white">Drag & Drop</p>
-                  <p className="text-xs text-purple-300 mt-1">JPG, PNG, WEBP (Max 10MB)</p>
+                  <p className="text-xs text-blue-300 mt-1">JPG, PNG, WEBP (Max 10MB)</p>
                 </>
               )}
             </div>
@@ -97,7 +97,7 @@ export function StyleProfile({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="rounded-xl overflow-hidden border-2 border-purple-500/40 shadow-xl"
+              className="rounded-xl overflow-hidden border-2 border-blue-500/40 shadow-xl"
             >
               <img
                 src={preview}
@@ -116,7 +116,7 @@ export function StyleProfile({
           className="space-y-3"
         >
           <div className="flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 text-yellow-400" />
+            <Lightbulb className="w-4 h-4 text-blue-400" />
             <p className="text-xs font-semibold text-white tracking-wide">PRO TIPS</p>
           </div>
 
@@ -126,10 +126,10 @@ export function StyleProfile({
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 + idx * 0.1 }}
-              className="flex gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20 hover:bg-yellow-500/10 transition-colors"
+              className="flex gap-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20 hover:bg-blue-500/10 transition-colors"
             >
-              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-yellow-500/30 flex items-center justify-center mt-0.5">
-                <span className="text-xs font-bold text-yellow-300">{idx + 1}</span>
+              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500/30 flex items-center justify-center mt-0.5">
+                <span className="text-xs font-bold text-blue-300">{idx + 1}</span>
               </div>
               <p className="text-xs text-gray-300 leading-relaxed">{tip}</p>
             </motion.div>

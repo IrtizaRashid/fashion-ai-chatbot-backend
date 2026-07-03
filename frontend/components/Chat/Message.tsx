@@ -19,7 +19,7 @@ export function Message({ message, isLatest }: MessageProps) {
       className={`flex gap-3 ${isAssistant ? "justify-start" : "justify-end"}`}
     >
       {isAssistant && (
-        <div className="h-7 w-7 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
+        <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
           AI
         </div>
       )}
@@ -27,8 +27,8 @@ export function Message({ message, isLatest }: MessageProps) {
       <div
         className={`max-w-[280px] px-4 py-3 rounded-lg ${
           isAssistant
-            ? "bg-slate-800 text-gray-100 border border-purple-500/20"
-            : "bg-purple-600/80 text-white"
+            ? "bg-slate-800 text-gray-100 border border-blue-500/20"
+            : "bg-blue-600/80 text-white"
         }`}
       >
         <div className="text-sm leading-relaxed">

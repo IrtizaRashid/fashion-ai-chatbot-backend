@@ -151,9 +151,9 @@ export default function Home() {
       <input ref={fileInputRef} type="file" className="hidden" />
 
       {/* Left Column - Chat (45%) */}
-      <div className="w-[45%] flex flex-col relative z-10 border-r border-purple-500/10">
+      <div className="w-[45%] flex flex-col relative z-10 border-r border-blue-500/10">
         {/* Slim Header */}
-        <div className="px-8 py-4 border-b border-purple-500/10 bg-slate-900/50 backdrop-blur-sm">
+        <div className="px-8 py-4 border-b border-blue-500/10 bg-slate-900/50 backdrop-blur-sm">
           <h1 className="text-lg font-bold text-white">AI Fashion Stylist</h1>
           <p className="text-xs text-purple-300 mt-1">Your personal style assistant</p>
         </div>
@@ -162,7 +162,7 @@ export default function Home() {
         <ChatContainer messages={messages} isLoading={isLoading} />
 
         {/* Chat Input */}
-        <div className="px-8 py-6 border-t border-purple-500/10 bg-slate-900/50 backdrop-blur-sm">
+        <div className="px-8 py-6 border-t border-blue-500/10 bg-slate-900/50 backdrop-blur-sm">
           <ChatInput
             onSend={handleSendMessage}
             disabled={isLoading || !userData.imagePreview}
