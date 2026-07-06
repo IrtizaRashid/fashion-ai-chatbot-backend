@@ -6,9 +6,9 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements-phase3.txt .
+COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements-phase3.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
