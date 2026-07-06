@@ -14,6 +14,7 @@ async def analyze_body(
     height: float,
     weight: float,
     mime_type: str = "image/jpeg",
+    gemini_api_key: Optional[str] = None,
 ) -> BodyAnalysisResponse:
     """
     Analyze body shape and proportions using Gemini Vision.
@@ -22,6 +23,7 @@ async def analyze_body(
         image_data: Image file bytes
         height: User's height in centimeters
         weight: User's weight in kilograms
+        gemini_api_key: Optional user-provided Gemini API key
 
     Returns:
         BodyAnalysisResponse with validated analysis
@@ -47,8 +49,8 @@ async def analyze_body(
         raise ValueError("Weight must be positive")
 
     try:
-        # Get Gemini client
-        gemini_client = get_gemini_client()
+        # Get Gemini client (use user key if provided, otherwise use default)
+        gemini_client = get_gemini_client(api_key=gemini_api_key)
 
         # Generate prompt
         prompt = get_body_analysis_prompt(height, weight)

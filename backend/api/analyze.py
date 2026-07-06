@@ -27,6 +27,7 @@ async def analyze_body_endpoint(
     image: UploadFile = File(..., description="User photo for analysis"),
     height: float = Form(..., gt=0, description="Height in cm"),
     weight: float = Form(..., gt=0, description="Weight in kg"),
+    gemini_api_key: str = Form(None, description="Optional user's Gemini API key"),
 ) -> BodyAnalysisResponse:
     """
     Analyze user's body shape and proportions.
@@ -114,6 +115,7 @@ async def analyze_body_endpoint(
             height=height,
             weight=weight,
             mime_type=image.content_type or "image/jpeg",
+            gemini_api_key=gemini_api_key,
         )
 
         if _is_unsupported_mens_scope(analysis):

@@ -4,6 +4,7 @@ import { useRef, useState } from "react"
 import { ChatContainer } from "@/components/Chat/ChatContainer"
 import { ChatInput } from "@/components/Chat/ChatInput"
 import { ProductCardData, StyleProfile } from "@/components/Dashboard/StyleProfile"
+import { ApiKeyModal } from "@/components/ApiKeyModal"
 import { Message as MessageType, UserData } from "@/lib/types"
 
 const API_BASE_URL = (
@@ -182,6 +183,7 @@ function formatAutomaticProductIntro(products: ProductCardData[]) {
 }
 
 export default function Home() {
+  const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageType[]>([INITIAL_MESSAGE])
   const [isLoading, setIsLoading] = useState(false)
   const [productsLoading, setProductsLoading] = useState(false)
@@ -225,10 +227,13 @@ export default function Home() {
 
   const analyzeCurrentImage = async (height: string, weight: string) => {
     if (!userData.image) throw new Error("Please upload an image first.")
+    if (!geminiApiKey) throw new Error("Please provide your Gemini API key.")
+
     const payload = new FormData()
     payload.append("image", userData.image)
     payload.append("height", height)
     payload.append("weight", weight)
+    payload.append("gemini_api_key", geminiApiKey)
 
     const response = await fetch(`${API_BASE_URL}/analyze-body`, { method: "POST", body: payload })
     if (!response.ok) {
@@ -377,6 +382,8 @@ export default function Home() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950">
+      {!geminiApiKey && <ApiKeyModal onSubmit={setGeminiApiKey} />}
+
       <input
         ref={fileInputRef}
         type="file"

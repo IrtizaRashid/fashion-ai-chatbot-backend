@@ -92,9 +92,23 @@ class GeminiClient:
 _gemini_client: Optional[GeminiClient] = None
 
 
-def get_gemini_client() -> GeminiClient:
-    """Get or create Gemini client instance."""
+def get_gemini_client(api_key: Optional[str] = None) -> GeminiClient:
+    """Get or create Gemini client instance.
+
+    Args:
+        api_key: Optional API key to use. If provided, creates a new instance.
+                If not provided, uses the singleton instance with the configured key.
+
+    Returns:
+        GeminiClient instance
+    """
     global _gemini_client
+
+    # If a custom API key is provided, create a new client instance
+    if api_key:
+        return GeminiClient(api_key=api_key)
+
+    # Otherwise use the singleton with the default key
     if _gemini_client is None:
         _gemini_client = GeminiClient()
     return _gemini_client
