@@ -1,4 +1,4 @@
-"""Body analysis API endpoints."""
+﻿"""Body analysis API endpoints."""
 
 import logging
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
@@ -8,6 +8,18 @@ from core.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _is_unsupported_mens_scope(analysis: BodyAnalysisResponse) -> bool:
+    text = " ".join(
+        [
+            analysis.body_type,
+            analysis.body_build,
+            analysis.summary,
+            analysis.disclaimer,
+        ]
+    ).lower()
+    return "unsupported" in text or "men's fashion styling only" in text or "men's styling photo required" in text
 
 
 @router.post("/analyze-body", response_model=BodyAnalysisResponse)
@@ -97,7 +109,19 @@ async def analyze_body_endpoint(
 
         # Call body analyzer
         logger.info("Calling body analyzer...")
-        analysis = await analyze_body(image_data, height, weight)
+        analysis = await analyze_body(
+            image_data=image_data,
+            height=height,
+            weight=weight,
+            mime_type=image.content_type or "image/jpeg",
+        )
+
+        if _is_unsupported_mens_scope(analysis):
+            logger.info("Rejected image outside men's styling scope")
+            raise HTTPException(
+                status_code=400,
+                detail="This app currently supports men's fashion styling only. Please upload a clear men's styling photo.",
+            )
 
         logger.info("Body analysis completed successfully")
         return analysis

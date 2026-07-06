@@ -13,6 +13,7 @@ async def analyze_body(
     image_data: bytes,
     height: float,
     weight: float,
+    mime_type: str = "image/jpeg",
 ) -> BodyAnalysisResponse:
     """
     Analyze body shape and proportions using Gemini Vision.
@@ -55,7 +56,7 @@ async def analyze_body(
         # Call Gemini Vision API
         logger.info("Calling Gemini Vision API for body analysis...")
         response_data = gemini_client.analyze_image_with_text(
-            image_data, prompt
+            image_data, prompt, mime_type
         )
 
         if not response_data:

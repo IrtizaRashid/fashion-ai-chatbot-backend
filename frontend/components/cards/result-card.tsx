@@ -25,6 +25,8 @@ export function ResultCard({
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
           </div>
+        ) : items.length === 0 ? (
+          <p className="text-sm text-gray-500">No recommendations available.</p>
         ) : type === "grid" ? (
           <div className="grid gap-2 sm:grid-cols-2">
             {items.map((item, index) => (
@@ -40,7 +42,7 @@ export function ResultCard({
           <ul className="space-y-2">
             {items.map((item, index) => (
               <li key={index} className="flex items-start gap-2 text-sm">
-                <span className="text-gray-400">•</span>
+                <span className="text-gray-400">-</span>
                 <span>{item}</span>
               </li>
             ))}

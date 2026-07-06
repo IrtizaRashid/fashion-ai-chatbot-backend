@@ -1,14 +1,35 @@
-"use client"
+﻿"use client"
 
 import { motion } from "framer-motion"
 import { Message as MessageType } from "@/lib/types"
 
 interface MessageProps {
   message: MessageType
-  isLatest?: boolean
 }
 
-export function Message({ message, isLatest }: MessageProps) {
+function renderLine(line: string) {
+  const parts = line.split(/(https?:\/\/[^\s]+)/g)
+
+  return parts.map((part, index) => {
+    if (part.startsWith("http://") || part.startsWith("https://")) {
+      return (
+        <a
+          key={`${part}-${index}`}
+          href={part}
+          target="_blank"
+          rel="noreferrer"
+          className="break-words text-blue-300 underline underline-offset-2 hover:text-blue-200"
+        >
+          Open product
+        </a>
+      )
+    }
+
+    return <span key={`${part}-${index}`}>{part}</span>
+  })
+}
+
+export function Message({ message }: MessageProps) {
   const isAssistant = message.role === "assistant"
 
   return (
@@ -25,7 +46,7 @@ export function Message({ message, isLatest }: MessageProps) {
       )}
 
       <div
-        className={`max-w-[280px] px-4 py-3 rounded-lg ${
+        className={`max-w-[360px] px-4 py-3 rounded-lg ${
           isAssistant
             ? "bg-slate-800 text-gray-100 border border-blue-500/20"
             : "bg-blue-600/80 text-white"
@@ -34,22 +55,12 @@ export function Message({ message, isLatest }: MessageProps) {
         <div className="text-sm leading-relaxed">
           {message.content.split("\n").map((line, i) => (
             <div key={i}>
-              {line.includes("•") ? (
-                <p className="mb-1 ml-2">
-                  {line.startsWith("•") ? line : line}
-                </p>
-              ) : line.includes("**") ? (
+              {line.includes("**") ? (
                 <p className="mb-2 font-semibold">
-                  {line
-                    .replace(/\*\*/g, "")
-                    .split(":")
-                    .map((part, idx) =>
-                      idx === 0 ? `${part}:` : part
-                    )
-                    .join("")}
+                  {renderLine(line.replace(/\*\*/g, ""))}
                 </p>
               ) : (
-                <p className="mb-2 last:mb-0">{line}</p>
+                <p className="mb-2 last:mb-0">{renderLine(line)}</p>
               )}
             </div>
           ))}

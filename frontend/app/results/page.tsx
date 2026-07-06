@@ -1,10 +1,81 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ResultCard } from "@/components/cards/result-card"
-import Link from "next/link"
+
+interface AnalysisResult {
+  body_type?: string
+  body_build?: string
+  shoulders?: string
+  torso?: string
+  legs?: string
+  neck?: string
+  posture?: string
+  recommended_fit?: string[]
+  recommended_shirts?: string[]
+  recommended_trousers?: string[]
+  recommended_colors?: string[]
+  recommended_patterns?: string[]
+  avoid?: string[]
+  summary?: string
+  disclaimer?: string
+}
+
+interface StoredAnalysis {
+  result: AnalysisResult
+  imageName?: string
+  analyzedAt?: string
+}
 
 export default function ResultsPage() {
+  const stored =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("fashion-analysis-result")
+      : null
+  let result: AnalysisResult | null = null
+  let imageName: string | undefined
+  let analyzedAt: string | undefined
+
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored) as StoredAnalysis
+      result = parsed.result
+      imageName = parsed.imageName
+      analyzedAt = parsed.analyzedAt
+    } catch {
+      result = null
+    }
+  }
+
+  const bodyItems = result
+    ? ([
+        result.body_type && `Body type: ${result.body_type}`,
+        result.body_build,
+        result.shoulders && `Shoulders: ${result.shoulders}`,
+        result.torso && `Torso: ${result.torso}`,
+        result.legs && `Legs: ${result.legs}`,
+        result.neck && `Neck: ${result.neck}`,
+        result.posture && `Posture: ${result.posture}`,
+      ].filter(Boolean) as string[])
+    : []
+
+  const clothingItems = [
+    ...(result?.recommended_shirts ?? []),
+    ...(result?.recommended_trousers ?? []),
+  ]
+
+  const explanationItems = result
+    ? ([
+        result.summary,
+        result.recommended_patterns?.length
+          ? `Patterns: ${result.recommended_patterns.join(" ")}`
+          : undefined,
+        result.avoid?.length ? `Avoid: ${result.avoid.join(" ")}` : undefined,
+        result.disclaimer,
+      ].filter(Boolean) as string[])
+    : []
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-12">
@@ -12,77 +83,59 @@ export default function ResultsPage() {
         <p className="mt-2 text-gray-600">
           Based on your photo and measurements, here are our personalized recommendations.
         </p>
+        {result && (
+          <p className="mt-3 text-sm text-gray-500">
+            Analyzed {imageName ?? "uploaded photo"}
+            {analyzedAt ? ` at ${new Date(analyzedAt).toLocaleTimeString()}` : ""}
+          </p>
+        )}
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        {/* Body Analysis */}
-        <ResultCard
-          title="Body Analysis"
-          items={["Loading analysis..."]}
-          loading={true}
-        />
+      {!result && (
+        <div className="mb-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
+          No analysis result found yet. Start a new analysis and upload a photo.
+        </div>
+      )}
 
-        {/* Recommended Colors */}
+      <div className="grid gap-8 md:grid-cols-2">
+        <ResultCard title="Body Analysis" items={bodyItems} loading={!result} />
+
         <ResultCard
           title="Recommended Colors"
-          items={["Loading colors..."]}
-          loading={true}
+          items={result?.recommended_colors ?? []}
+          loading={!result}
           type="grid"
         />
 
-        {/* Recommended Fits */}
         <ResultCard
           title="Recommended Fits"
-          items={["Loading fits..."]}
-          loading={true}
+          items={result?.recommended_fit ?? []}
+          loading={!result}
         />
 
-        {/* Recommended Shirts */}
         <ResultCard
-          title="Recommended Shirts"
-          items={["Loading recommendations..."]}
-          loading={true}
+          title="Recommended Clothing"
+          items={clothingItems}
+          loading={!result}
         />
 
-        {/* Reasons */}
         <div className="md:col-span-2">
           <ResultCard
             title="Why These Recommendations?"
-            items={["Loading explanations..."]}
-            loading={true}
+            items={explanationItems}
+            loading={!result}
           />
-        </div>
-
-        {/* Product Cards */}
-        <div className="md:col-span-2">
-          <h2 className="mb-4 text-2xl font-bold text-black">
-            Suggested Products
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="flex flex-col rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <div className="h-48 bg-gray-200 animate-pulse" />
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-4 bg-gray-200 rounded animate-pulse w-2/3" />
-                  <div className="h-8 bg-gray-200 rounded animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:justify-center">
         <Link href="/analyze">
           <Button size="lg">New Analysis</Button>
         </Link>
         <Link href="/">
-          <Button size="lg" variant="outline">Back to Home</Button>
+          <Button size="lg" variant="outline">
+            Back to Home
+          </Button>
         </Link>
       </div>
     </div>

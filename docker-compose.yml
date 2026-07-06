@@ -1,0 +1,22 @@
+﻿services:
+  redis:
+    image: redis:7-alpine
+    container_name: fashion-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "no"]
+
+  backend:
+    build:
+      context: ./backend
+    container_name: fashion-backend
+    depends_on:
+      - redis
+    ports:
+      - "8001:8001"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      SESSION_TTL_SECONDS: 1800
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    env_file:
+      - ./backend/.env

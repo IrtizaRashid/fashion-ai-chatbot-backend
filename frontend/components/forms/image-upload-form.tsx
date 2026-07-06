@@ -1,23 +1,31 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Upload, X } from "lucide-react"
+import { ImageIcon, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 
 const OCCASIONS = ["Casual", "Office", "Wedding", "Party"]
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
+).replace(/\/api\/?$/, "")
 
 export function ImageUploadForm() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const dropZoneRef = useRef<HTMLDivElement>(null)
 
   const [image, setImage] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string>("")
+  const [preview, setPreview] = useState("")
   const [isDragging, setIsDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -49,39 +57,48 @@ export function ImageUploadForm() {
     e.stopPropagation()
     setIsDragging(false)
 
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      handleFileSelect(files[0])
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleFileSelect(file)
     }
   }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFileSelect(e.target.files[0])
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileSelect(file)
     }
+    e.target.value = ""
   }
 
   const handleFileSelect = (file: File) => {
-    const newErrors = { ...errors }
-    delete newErrors.image
+    const nextErrors = { ...errors }
+    delete nextErrors.image
+    delete nextErrors.submit
 
-    // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/webp"]
     if (!validTypes.includes(file.type)) {
-      setErrors({ ...newErrors, image: "Only JPG, PNG, and WEBP files are allowed" })
+      setErrors({
+        ...nextErrors,
+        image: "Only JPG, PNG, and WEBP files are allowed",
+      })
       return
     }
 
-    // Validate file size (10 MB)
     if (file.size > 10 * 1024 * 1024) {
-      setErrors({ ...newErrors, image: "File size must be less than 10 MB" })
+      setErrors({
+        ...nextErrors,
+        image: "File size must be less than 10 MB",
+      })
       return
     }
 
     setImage(file)
+    setErrors(nextErrors)
+
     const reader = new FileReader()
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string)
+    reader.onload = (event) => {
+      setPreview(String(event.target?.result ?? ""))
     }
     reader.readAsDataURL(file)
   }
@@ -91,39 +108,39 @@ export function ImageUploadForm() {
   ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear error for this field
     setErrors((prev) => {
-      const newErrors = { ...prev }
-      delete newErrors[name]
-      return newErrors
+      const nextErrors = { ...prev }
+      delete nextErrors[name]
+      delete nextErrors.submit
+      return nextErrors
     })
   }
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const nextErrors: Record<string, string> = {}
 
     if (!image) {
-      newErrors.image = "Please upload an image"
+      nextErrors.image = "Please upload an image"
     }
 
     if (!formData.height) {
-      newErrors.height = "Height is required"
-    } else if (isNaN(Number(formData.height)) || Number(formData.height) <= 0) {
-      newErrors.height = "Height must be a positive number"
+      nextErrors.height = "Height is required"
+    } else if (Number.isNaN(Number(formData.height)) || Number(formData.height) <= 0) {
+      nextErrors.height = "Height must be a positive number"
     }
 
     if (!formData.weight) {
-      newErrors.weight = "Weight is required"
-    } else if (isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
-      newErrors.weight = "Weight must be a positive number"
+      nextErrors.weight = "Weight is required"
+    } else if (Number.isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
+      nextErrors.weight = "Weight must be a positive number"
     }
 
     if (!formData.occasion) {
-      newErrors.occasion = "Please select an occasion"
+      nextErrors.occasion = "Please select an occasion"
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,12 +151,47 @@ export function ImageUploadForm() {
     }
 
     setLoading(true)
+    sessionStorage.removeItem("fashion-analysis-result")
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const payload = new FormData()
+      payload.append("image", image as File)
+      payload.append("height", formData.height)
+      payload.append("weight", formData.weight)
+
+      const response = await fetch(`${API_BASE_URL}/analyze-body`, {
+        method: "POST",
+        body: payload,
+      })
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null)
+        throw new Error(errorBody?.detail ?? "Image analysis failed")
+      }
+
+      const result = await response.json()
+      sessionStorage.setItem(
+        "fashion-analysis-result",
+        JSON.stringify({
+          result,
+          formData,
+          imageName: image?.name,
+          analyzedAt: new Date().toISOString(),
+          imagePreview: preview,
+        })
+      )
+
       router.push("/results")
-    }, 2000)
+    } catch (error) {
+      setErrors({
+        submit:
+          error instanceof Error
+            ? error.message
+            : "Unable to analyze this image. Please try again.",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -152,7 +204,6 @@ export function ImageUploadForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Image Upload */}
         <Card>
           <CardHeader>
             <CardTitle>Upload Photo</CardTitle>
@@ -163,23 +214,31 @@ export function ImageUploadForm() {
           <CardContent>
             {!preview ? (
               <div
-                ref={dropZoneRef}
                 onDragEnter={handleDragEnter}
                 onDragOver={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 transition-colors ${
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
                   isDragging
                     ? "border-black bg-black/5"
                     : "border-gray-300 hover:border-black"
                 }`}
               >
                 <Upload className="h-8 w-8 text-gray-400" />
-                <p className="mt-2 font-medium text-black">
-                  Drag your photo here
-                </p>
+                <p className="mt-2 font-medium text-black">Drag your photo here</p>
                 <p className="text-sm text-gray-600">or click to browse</p>
+                <Button
+                  type="button"
+                  className="mt-4 bg-black text-white hover:bg-black/90"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    fileInputRef.current?.click()
+                  }}
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  Choose Photo
+                </Button>
               </div>
             ) : (
               <div className="relative inline-block w-full">
@@ -193,6 +252,12 @@ export function ImageUploadForm() {
                   onClick={() => {
                     setImage(null)
                     setPreview("")
+                    setErrors((prev) => {
+                      const nextErrors = { ...prev }
+                      delete nextErrors.image
+                      delete nextErrors.submit
+                      return nextErrors
+                    })
                   }}
                   className="absolute -right-2 -top-2 rounded-full bg-red-500 p-2 text-white hover:bg-red-600"
                 >
@@ -201,11 +266,12 @@ export function ImageUploadForm() {
               </div>
             )}
             <input
+              id="photo-upload"
               ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={handleFileInputChange}
-              className="hidden"
+              className="sr-only"
             />
             {errors.image && (
               <p className="mt-2 text-sm text-red-500">{errors.image}</p>
@@ -213,7 +279,6 @@ export function ImageUploadForm() {
           </CardContent>
         </Card>
 
-        {/* Body Measurements */}
         <Card>
           <CardHeader>
             <CardTitle>Body Measurements</CardTitle>
@@ -256,7 +321,6 @@ export function ImageUploadForm() {
           </CardContent>
         </Card>
 
-        {/* Preferences */}
         <Card>
           <CardHeader>
             <CardTitle>Preferences</CardTitle>
@@ -334,15 +398,12 @@ export function ImageUploadForm() {
           </CardContent>
         </Card>
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          disabled={loading}
-        >
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? "Analyzing Your Style..." : "Analyze My Style"}
         </Button>
+        {errors.submit && (
+          <p className="text-center text-sm text-red-500">{errors.submit}</p>
+        )}
       </form>
     </div>
   )

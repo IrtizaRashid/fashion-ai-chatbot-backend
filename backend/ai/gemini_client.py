@@ -20,7 +20,7 @@ class GeminiClient:
         self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
 
     def analyze_image_with_text(
-        self, image_data: bytes, prompt: str
+        self, image_data: bytes, prompt: str, mime_type: str
     ) -> Optional[dict]:
         """
         Send image and text prompt to Gemini Vision.
@@ -43,7 +43,7 @@ class GeminiClient:
 
             # Create image part for API
             image_part = {
-                "mime_type": "image/jpeg",
+                "mime_type": mime_type,
                 "data": image_b64,
             }
 

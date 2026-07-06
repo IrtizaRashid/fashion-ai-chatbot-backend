@@ -39,6 +39,16 @@ export function ChatInput({
     }
   }
 
+  const submitFromKeyboard = () => {
+    if (input.trim() && !disabled) {
+      onSend(input)
+      setInput("")
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto"
+      }
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       <textarea
@@ -48,7 +58,7 @@ export function ChatInput({
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault()
-            handleSubmit(e as any)
+            submitFromKeyboard()
           }
         }}
         placeholder={placeholder}
