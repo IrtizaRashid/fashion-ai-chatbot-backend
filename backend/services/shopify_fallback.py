@@ -5,44 +5,11 @@ from urllib.request import Request, urlopen
 
 from models.product import Product
 from services.product_normalizer import ProductNormalizer
+from services.product_gender_filter import is_mens_product, product_matches_any_color
 
 
 class ShopifyFallbackClient:
     """Fallback product extractor for Shopify stores when rendered cards are blocked or changed."""
-
-    BOYS_BLOCKED_TERMS = [
-        "girl",
-        "girls",
-        "women",
-        "woman",
-        "ladies",
-        "female",
-        "cropped",
-        "crop",
-        "lace",
-        "skirt",
-        "dress",
-        "blouse",
-        "camisole",
-        "bra",
-        "bralette",
-        "tights",
-        "legging",
-        "leggings",
-        "frock",
-        "kurti",
-        "dupatta",
-        "heels",
-        "makeup",
-        "kids girls",
-        "baby girl",
-        "super cropped",
-        "with lace",
-        "lace detail",
-        "/women",
-        "/girls",
-        "/ladies",
-    ]
 
     def __init__(self, brand: str, base_url: str, normalizer: ProductNormalizer | None = None) -> None:
         self.brand = brand
@@ -56,12 +23,16 @@ class ShopifyFallbackClient:
         limit: int = 60,
     ) -> list[Product]:
         products = self._load_products(limit=250)
+        requested_colors = self._requested_colors_from_queries(queries)
         matched: list[Product] = []
         fallback: list[Product] = []
 
         for raw_product in products:
             product = self._normalize_product(raw_product)
-            if product is None or not self._is_boys_product(product):
+            extra_text = self._raw_product_text(raw_product)
+            if product is None or not is_mens_product(product, extra_text):
+                continue
+            if requested_colors and not product_matches_any_color(product, requested_colors, extra_text):
                 continue
             if budget is not None and product.price is not None and product.price > budget:
                 continue
@@ -198,27 +169,27 @@ class ShopifyFallbackClient:
 
         return score
 
-    @classmethod
-    def _is_boys_product(cls, product: Product) -> bool:
-        text = f"{product.title} {product.product_url} {product.material or ''} {' '.join(product.colors)}".lower().replace("-", " ")
-        if any(term in text for term in cls.BOYS_BLOCKED_TERMS):
-            return False
-
-        allowed_terms = [
-            "shirt",
-            "t shirt",
-            "tshirt",
-            "polo",
-            "button down",
-            "jean",
-            "pant",
-            "trouser",
-            "chino",
-            "jacket",
-            "hoodie",
-            "sweatshirt",
+    @staticmethod
+    def _requested_colors_from_queries(queries: list[str]) -> list[str]:
+        known_colors = [
+            "black", "white", "blue", "navy", "green", "brown", "grey", "gray",
+            "red", "olive", "khaki", "maroon", "cream", "beige", "yellow", "purple", "pink",
         ]
-        return any(term in text for term in allowed_terms)
+        query_text = " ".join(queries).lower().replace("-", " ")
+        return [color.title() for color in known_colors if color in query_text]
+
+    @staticmethod
+    def _raw_product_text(raw_product: dict) -> str:
+        return ' '.join(
+            str(value)
+            for value in [
+                raw_product.get('product_type'),
+                raw_product.get('body_html'),
+                ' '.join(raw_product.get('tags') or []),
+                raw_product.get('handle'),
+            ]
+            if value
+        )
 
     @staticmethod
     def _looks_like_clothing(product: Product) -> bool:
@@ -234,3 +205,5 @@ class ShopifyFallbackClient:
             return int(float(str(value)))
         except ValueError:
             return None
+
+

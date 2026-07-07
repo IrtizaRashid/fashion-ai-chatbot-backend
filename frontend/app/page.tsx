@@ -8,7 +8,7 @@ import { ApiKeyModal } from "@/components/ApiKeyModal"
 import { Message as MessageType, UserData } from "@/lib/types"
 
 const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8001"
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001"
 ).replace(/\/api\/?$/, "")
 
 interface GeminiAnalysis {
@@ -64,6 +64,33 @@ function validateWeight(weight: string) {
   return null
 }
 
+
+function isMensProductCard(product: ProductCardData) {
+  const text = [
+    product.brand,
+    product.title,
+    product.color,
+    ...(product.colors ?? []),
+    product.material,
+    product.product_url,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .replaceAll("-", " ")
+
+  const blocked = [
+    "girl", "girls", "woman", "women", "ladies", "female", "cropped", "crop top",
+    "lace", "skirt", "dress", "blouse", "camisole", "bra", "bralette", "legging",
+    "leggings", "frock", "kurti", "dupatta", "heels", "/women", "/girls", "/ladies",
+  ]
+
+  return !blocked.some((term) => text.includes(term.replaceAll("-", " ")))
+}
+
+function menOnlyProducts(products: ProductCardData[]) {
+  return products.filter(isMensProductCard)
+}
 function formatList(label: string, items?: string[]) {
   if (!items?.length) return undefined
   return `**${label}:** ${items.join(" ")}`
@@ -253,19 +280,20 @@ export default function Home() {
       })
       if (!searchResponse.ok) throw new Error("Product search failed.")
       const searchData = (await searchResponse.json()) as { products: ProductCardData[] }
+      const searchedProducts = menOnlyProducts(searchData.products ?? [])
 
       const rankResponse = await fetch(`${API_BASE_URL}/recommend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           body_analysis: analysis,
-          products: searchData.products ?? [],
+          products: searchedProducts,
           budget: buildProductRequest(analysis, message).budget,
         }),
       })
       if (!rankResponse.ok) throw new Error("Ranking failed.")
       const rankData = (await rankResponse.json()) as { recommendations: ProductCardData[] }
-      const rankedProducts = rankData.recommendations ?? []
+      const rankedProducts = menOnlyProducts(rankData.recommendations ?? [])
 
       await fetch(`${API_BASE_URL}/sessions`, {
         method: "POST",
@@ -297,12 +325,12 @@ export default function Home() {
       })
       if (!response.ok) throw new Error("Cached filter failed.")
       const data = (await response.json()) as { reply: string; recommendations: ProductCardData[] }
-      const foundProducts = data.recommendations ?? []
+      const foundProducts = menOnlyProducts(data.recommendations ?? [])
       setProducts(foundProducts)
       return { reply: data.reply, products: foundProducts }
     } catch {
       const fallbackProducts = analysisResult ? await searchRankAndCacheProducts(analysisResult, message) : []
-      return { reply: formatProductLinks(fallbackProducts, message), products: fallbackProducts }
+      return { reply: formatProductLinks(menOnlyProducts(fallbackProducts), message), products: menOnlyProducts(fallbackProducts) }
     } finally {
       setProductsLoading(false)
     }
@@ -428,3 +456,5 @@ export default function Home() {
     </div>
   )
 }
+
+

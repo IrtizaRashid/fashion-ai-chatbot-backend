@@ -5,6 +5,7 @@ from fastapi import APIRouter
 
 from models.product import ProductSearchRequest, ProductSearchResponse
 from services.product_normalizer import ProductNormalizer
+from services.product_gender_filter import filter_mens_products, filter_products_by_color, filter_products_by_category
 from services.query_generator import QueryGenerator
 from services.shopify_fallback import ShopifyFallbackClient
 
@@ -50,7 +51,9 @@ def _collect_products(request: ProductSearchRequest):
             source_info["error"] = traceback.format_exc()
         debug["sources"].append(source_info)
 
-    products = normalizer.dedupe(products)
+    products = filter_mens_products(normalizer.dedupe(products))
+    products = filter_products_by_category(products, request.recommended_shirts)
+    products = filter_products_by_color(products, request.recommended_colors)
     products = sorted(products, key=lambda product: product.relevance_score, reverse=True)
     debug["final_count"] = len(products)
     return products, debug
@@ -76,3 +79,6 @@ async def search_products_debug(request: ProductSearchRequest):
         for product in products[:10]
     ]
     return debug
+
+
+

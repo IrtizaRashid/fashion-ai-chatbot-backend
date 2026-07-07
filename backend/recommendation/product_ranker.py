@@ -4,38 +4,12 @@ from __future__ import annotations
 
 import re
 
+from services.product_gender_filter import is_mens_product as product_is_mens
 from recommendation.schemas import BodyAnalysis, ProductInput, Recommendation
 
 
 class ProductRanker:
     """Scores men's products against body analysis and optional user constraints."""
-
-    WOMENS_BLOCKED_TERMS = [
-        "girl",
-        "girls",
-        "women",
-        "woman",
-        "ladies",
-        "female",
-        "cropped",
-        "crop",
-        "lace",
-        "skirt",
-        "dress",
-        "blouse",
-        "camisole",
-        "bra",
-        "bralette",
-        "tights",
-        "legging",
-        "leggings",
-        "frock",
-        "kurti",
-        "dupatta",
-        "heels",
-        "super cropped",
-        "lace detail",
-    ]
 
     def rank(
         self,
@@ -133,8 +107,7 @@ class ProductRanker:
 
     @classmethod
     def is_mens_product(cls, product: ProductInput) -> bool:
-        text = cls._product_text(product)
-        return not any(term in text for term in cls.WOMENS_BLOCKED_TERMS)
+        return product_is_mens(product)
 
     @staticmethod
     def _product_text(product: ProductInput) -> str:
@@ -256,3 +229,4 @@ class ProductRanker:
             f"Based on the provided {body} analysis, this {product.title} is {main_strength} "
             "and should work well as a practical styling option."
         )
+

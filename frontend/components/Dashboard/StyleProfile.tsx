@@ -10,6 +10,7 @@ export interface ProductCardData {
   price?: number | null
   currency?: string
   color?: string | null
+  colors?: string[]
   sizes?: string[]
   material?: string | null
   image_url?: string | null
@@ -223,3 +224,4 @@ export function StyleProfile({
     </div>
   )
 }
+

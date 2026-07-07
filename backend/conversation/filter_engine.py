@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from conversation.schemas import FilterCriteria
 from recommendation.schemas import Recommendation
+from services.product_gender_filter import product_matches_any_color
 
 
 class FilterEngine:
@@ -15,7 +16,7 @@ class FilterEngine:
         if criteria.exclude_brand:
             filtered = [item for item in filtered if not self._match(item.brand, criteria.exclude_brand)]
         if criteria.color:
-            filtered = [item for item in filtered if self._contains(self._product_text(item), criteria.color)]
+            filtered = [item for item in filtered if product_matches_any_color(item, [criteria.color])]
         if criteria.material:
             filtered = [item for item in filtered if self._contains(item.material or "", criteria.material)]
         if criteria.max_price is not None:
@@ -89,3 +90,4 @@ class FilterEngine:
         if "occasion" in value:
             return any(term in text for term in ["button", "oxford", "trouser", "shirt"])
         return True
+

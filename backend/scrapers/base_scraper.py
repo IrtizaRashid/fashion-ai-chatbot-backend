@@ -9,6 +9,7 @@ from playwright.async_api import async_playwright
 
 from models.product import Product
 from services.product_normalizer import ProductNormalizer
+from services.product_gender_filter import is_mens_product
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +164,7 @@ class BaseScraper(ABC):
             return None
 
         colors = self.normalizer.extract_colors(title, text, product_url)
-        return Product(
+        product = Product(
             brand=self.brand,
             title=title,
             price=price,
@@ -176,6 +177,9 @@ class BaseScraper(ABC):
             available=self._extract_availability(text),
             relevance_score=score,
         )
+        if not is_mens_product(product, text):
+            return None
+        return product
 
     def _extract_title(self, card) -> str | None:
         selectors = [".product-title", ".card__heading", ".product-card__title", ".name", ".title", "h3", "h2", "a[title]"]
@@ -240,3 +244,4 @@ class BaseScraper(ABC):
             score += 5
 
         return score
+

@@ -4,6 +4,7 @@ import logging
 from models.product import Product, ProductSearchRequest
 from scrapers.j_scraper import JScraper
 from services.product_normalizer import ProductNormalizer
+from services.product_gender_filter import filter_mens_products, filter_products_by_color, filter_products_by_category
 from services.query_generator import QueryGenerator
 from services.shopify_fallback import ShopifyFallbackClient
 
@@ -31,7 +32,9 @@ class SearchService:
         )
 
         products = [product for brand_products in results for product in brand_products]
-        products = self.normalizer.dedupe(products)
+        products = filter_mens_products(self.normalizer.dedupe(products))
+        products = filter_products_by_category(products, recommendations.recommended_shirts)
+        products = filter_products_by_color(products, recommendations.recommended_colors)
         return sorted(products, key=lambda product: product.relevance_score, reverse=True)
 
     async def _safe_shopify(
@@ -58,3 +61,6 @@ class SearchService:
         except Exception as exc:
             logger.exception("J. product extraction failed: %s", exc)
             return []
+
+
+
